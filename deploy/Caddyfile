@@ -1,0 +1,7 @@
+{$DOMAIN:localhost} {
+    reverse_proxy api:8000
+}
+
+wizard.{$DOMAIN:localhost} {
+    reverse_proxy setup-wizard:80
+}

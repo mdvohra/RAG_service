@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sample site — RAG Embed demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      color: #0f172a;
+      background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      margin: 0;
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header p { margin: 4px 0 0; font-size: 0.875rem; color: #64748b; }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 24px 120px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+    h2 { font-size: 1.1rem; margin: 0 0 12px; }
+    ul { padding-left: 1.25rem; }
+    .hint {
+      font-size: 0.875rem;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Acme Corp — Demo site</h1>
+    <p>This page embeds the RAG chat widget in the bottom-right corner.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Welcome</h2>
+      <p>
+        This is a minimal sample page for testing your RAG Embed widget locally.
+        Upload documents in the setup wizard, then ask questions about them using the chat bubble.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Try asking</h2>
+      <ul>
+        <li>What is your refund policy?</li>
+        <li>How can I contact support?</li>
+        <li>What services do you offer?</li>
+      </ul>
+      <div class="hint">
+        Open the purple chat button in the bottom-right. If the widget does not appear,
+        ensure the API is running at <code>http://localhost:8000</code> and the widget
+        bundle exists (<code>widget/dist/embed.js</code>).
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>How to open this page</h2>
+      <p>From the project root:</p>
+      <pre style="background:#1e293b;color:#e2e8f0;padding:12px;border-radius:8px;font-size:13px;">cd sample-site
+npx --yes serve -l 3000</pre>
+      <p>Then visit <code>http://localhost:3000</code> (any localhost port works with default settings).</p>
+    </div>
+  </main>
+
+  <script
+    src="http://localhost:8000/widget/v1/embed.js"
+    data-widget-key="wk_dev_widget_key_change_me"
+    data-api-url="http://localhost:8000"
+    data-site-url="http://localhost:8080"
+    data-position="bottom-right"
+    async
+  ></script>
+</body>
+</html>

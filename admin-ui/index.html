@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Embed — Document Manager</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    header {
+      background: #4f46e5;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 1.2rem; }
+    header nav a { color: #e0e7ff; font-size: 14px; margin-left: 16px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    h2 { font-size: 1rem; margin: 0 0 16px; }
+    label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+    input, select {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 100%;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+    button {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.secondary { background: #64748b; }
+    button.danger { background: #dc2626; }
+    button.small { padding: 6px 10px; font-size: 12px; margin-right: 6px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      min-width: 100px;
+    }
+    .stat strong { display: block; font-size: 1.4rem; }
+    .stat span { font-size: 12px; color: #64748b; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { font-size: 12px; color: #64748b; text-transform: uppercase; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .ready { background: #dcfce7; color: #166534; }
+    .processing, .pending { background: #fef3c7; color: #92400e; }
+    .failed { background: #fee2e2; color: #991b1b; }
+    .error-msg { font-size: 12px; color: #b91c1c; margin-top: 4px; max-width: 320px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 16px; }
+    .toolbar > div { flex: 1; min-width: 180px; }
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+    .empty { text-align: center; color: #64748b; padding: 32px; }
+    .upload-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 12px;
+      background: #f8fafc;
+    }
+    .upload-zone.drag { border-color: #4f46e5; background: #eef2ff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Document Manager</h1>
+    <nav>
+      <a href="http://localhost:8080" target="_blank">Setup Wizard</a>
+      <a href="http://localhost:3000" target="_blank">Sample Site</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Connection</h2>
+      <div class="row">
+        <div>
+          <label>API URL</label>
+          <input id="apiUrl" value="http://localhost:8000" />
+        </div>
+        <div>
+          <label>API Key</label>
+          <input id="apiKey" type="password" placeholder="Bearer token" />
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:12px;">
+        <div>
+          <label>Collection</label>
+          <select id="collectionSelect"></select>
+        </div>
+        <button type="button" onclick="saveSettings()">Save & Connect</button>
+        <button type="button" class="secondary" onclick="loadDocuments()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Upload documents</h2>
+      <p style="font-size:13px;color:#64748b;margin:0 0 8px;">
+        PDF, TXT, MD supported. Files are processed in the background after upload.
+      </p>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.markdown" />
+        <p style="margin:12px 0 0;font-size:13px;color:#64748b;">or drag files here</p>
+      </div>
+      <button type="button" onclick="uploadFiles()" style="margin-top:12px;">Upload selected</button>
+    </div>
+
+    <div class="card">
+      <h2>Your documents</h2>
+      <div class="stats" id="stats"></div>
+      <div id="docTable"></div>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'rag_admin_settings';
+    let collectionId = null;
+    let pollTimer = null;
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function settings() {
+      return {
+        api: document.getElementById('apiUrl').value.replace(/\/$/, ''),
+        key: document.getElementById('apiKey').value.trim(),
+      };
+    }
+
+    function authHeaders() {
+      const { key } = settings();
+      return { Authorization: 'Bearer ' + key };
+    }
+
+    function saveSettings() {
+      const s = settings();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      loadCollections().then(() => loadDocuments());
+      toast('Settings saved');
+    }
+
+    function loadStoredSettings() {
+      try {
+        const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        if (s.api) document.getElementById('apiUrl').value = s.api;
+        if (s.key) document.getElementById('apiKey').value = s.key;
+      } catch (_) {}
+    }
+
+    async function loadCollections() {
+      const { api } = settings();
+      const sel = document.getElementById('collectionSelect');
+      const r = await fetch(api + '/v1/collections', { headers: authHeaders() });
+      if (!r.ok) throw new Error('Failed to load collections');
+      const cols = await r.json();
+      sel.innerHTML = cols.map(c =>
+        `<option value="${c.id}">${c.name} (${c.slug})</option>`
+      ).join('');
+      collectionId = cols[0]?.id || null;
+      if (collectionId) sel.value = collectionId;
+      sel.onchange = () => {
+        collectionId = sel.value;
+        loadDocuments();
+      };
+    }
+
+    function statusBadge(status) {
+      const cls = status === 'ready' ? 'ready' : status === 'failed' ? 'failed' : status;
+      return `<span class="badge ${cls}">${status}</span>`;
+    }
+
+    function renderStats(docs) {
+      const counts = { total: docs.length, ready: 0, processing: 0, failed: 0 };
+      docs.forEach(d => {
+        if (d.status === 'ready') counts.ready++;
+        else if (d.status === 'failed') counts.failed++;
+        else counts.processing++;
+      });
+      document.getElementById('stats').innerHTML = `
+        <div class="stat"><strong>${counts.total}</strong><span>Total</span></div>
+        <div class="stat"><strong>${counts.ready}</strong><span>Ready</span></div>
+        <div class="stat"><strong>${counts.processing}</strong><span>Processing</span></div>
+        <div class="stat"><strong>${counts.failed}</strong><span>Failed</span></div>
+      `;
+    }
+
+    function renderTable(docs) {
+      const el = document.getElementById('docTable');
+      if (!docs.length) {
+        el.innerHTML = '<div class="empty">No documents yet. Upload files above.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${docs.map(d => `
+              <tr>
+                <td>
+                  <strong>${escapeHtml(d.filename)}</strong>
+                  ${d.error_message ? `<div class="error-msg">${escapeHtml(d.error_message)}</div>` : ''}
+                </td>
+                <td>${statusBadge(d.status)}</td>
+                <td style="font-size:12px;color:#64748b;">${formatDate(d.updated_at || d.created_at)}</td>
+                <td>
+                  <button class="small secondary" onclick="reindexDoc('${d.id}')">Reindex</button>
+                  <button class="small danger" onclick="deleteDoc('${d.id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    }
+
+    async function loadDocuments() {
+      const { api } = settings();
+      collectionId = document.getElementById('collectionSelect').value || collectionId;
+      if (!collectionId) return;
+      try {
+        const r = await fetch(api + '/v1/collections/' + collectionId + '/documents', {
+          headers: authHeaders(),
+        });
+        if (!r.ok) throw new Error('Failed to load documents');
+        const docs = await r.json();
+        renderStats(docs);
+        renderTable(docs);
+        const pending = docs.some(d => d.status === 'pending' || d.status === 'processing');
+        if (pending && !pollTimer) {
+          pollTimer = setInterval(loadDocuments, 4000);
+        } else if (!pending && pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      } catch (e) {
+        toast(e.message || 'Error loading documents');
+      }
+    }
+
+    async function uploadFiles() {
+      const files = document.getElementById('fileInput').files;
+      if (!files.length) { toast('Select files first'); return; }
+      const { api } = settings();
+      collectionId = document.getElementById('collectionSelect').value;
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('metadata', '{}');
+        const r = await fetch(api + '/v1/collections/' + collectionId + '/documents', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: fd,
+        });
+        if (!r.ok) {
+          toast('Upload failed: ' + file.name);
+          return;
+        }
+      }
+      document.getElementById('fileInput').value = '';
+      toast('Uploaded ' + files.length + ' file(s)');
+      loadDocuments();
+    }
+
+    async function deleteDoc(id) {
+      if (!confirm('Delete this document and its indexed chunks?')) return;
+      const { api } = settings();
+      const r = await fetch(api + '/v1/documents/' + id, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      if (!r.ok) { toast('Delete failed'); return; }
+      toast('Document deleted');
+      loadDocuments();
+    }
+
+    async function reindexDoc(id) {
+      const { api } = settings();
+      const r = await fetch(api + '/v1/documents/' + id + '/reindex', {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      if (!r.ok) { toast('Reindex failed'); return; }
+      toast('Reindex queued');
+      loadDocuments();
+    }
+
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag');
+      document.getElementById('fileInput').files = e.dataTransfer.files;
+    });
+
+    loadStoredSettings();
+    if (!document.getElementById('apiKey').value) {
+      document.getElementById('apiKey').value = 'rag_dev_api_key_change_me';
+    }
+    loadCollections().then(() => loadDocuments()).catch(() => toast('Connect API first'));
+  </script>
+</body>
+</html>

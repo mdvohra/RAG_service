@@ -1,0 +1,21 @@
+:root {
+  --rag-primary: #4f46e5;
+  --rag-primary-hover: #4338ca;
+  --rag-primary-light: #eef2ff;
+  --rag-bg: #f8fafc;
+  --rag-surface: #ffffff;
+  --rag-text: #0f172a;
+  --rag-text-muted: #64748b;
+  --rag-border: #e2e8f0;
+  --rag-success: #166534;
+  --rag-success-bg: #dcfce7;
+  --rag-warning: #92400e;
+  --rag-warning-bg: #fef3c7;
+  --rag-error: #991b1b;
+  --rag-error-bg: #fee2e2;
+  --rag-radius: 12px;
+  --rag-radius-lg: 16px;
+  --rag-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --rag-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.12);
+  --rag-font: "Inter", system-ui, -apple-system, sans-serif;
+}
