@@ -139,3 +139,16 @@ Normal customers use `/v1/auth/signup` instead.
 | Login | Yes | No (setup wizard) |
 | LLM keys | Per tenant (BYOK) | Global `.env` |
 | UI | `platform-ui` | `setup-wizard` + `admin-ui` |
+
+## Deploy on Render
+
+One-click SaaS on [Render](https://render.com) using **`deploy/saas/render.yaml`**.
+
+```text
+Blueprint path: deploy/saas/render.yaml
+Env reference:  deploy/saas/.env.render.example
+Postgres init:  deploy/saas/render-init-db.sql
+Full guide:     deploy/saas/RENDER.md
+```
+
+Do **not** use `rag4all-deploy/` (single-tenant) for Render SaaS.

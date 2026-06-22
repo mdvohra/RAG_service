@@ -19,6 +19,8 @@ $ErrorActionPreference = "Stop"
 $root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $apiImage = "${User}/rag4all-api:${Tag}"
 $uiImage = "${User}/rag4all-platform-ui:${Tag}"
+$wizardImage = "${User}/rag4all-setup-wizard:${Tag}"
+$adminImage = "${User}/rag4all-admin-ui:${Tag}"
 
 Write-Host "Building $apiImage ..."
 docker build -f (Join-Path $root "backend\Dockerfile") -t $apiImage $root
@@ -26,16 +28,30 @@ docker build -f (Join-Path $root "backend\Dockerfile") -t $apiImage $root
 Write-Host "Building $uiImage ..."
 docker build -t $uiImage (Join-Path $root "platform-ui")
 
+Write-Host "Building $wizardImage ..."
+docker build -t $wizardImage (Join-Path $root "setup-wizard")
+
+Write-Host "Building $adminImage ..."
+docker build -t $adminImage (Join-Path $root "admin-ui")
+
 Write-Host "Pushing $apiImage ..."
 docker push $apiImage
 
 Write-Host "Pushing $uiImage ..."
 docker push $uiImage
 
+Write-Host "Pushing $wizardImage ..."
+docker push $wizardImage
+
+Write-Host "Pushing $adminImage ..."
+docker push $adminImage
+
 Write-Host ""
 Write-Host "Done. Images published:"
 Write-Host "  $apiImage   (api + worker)"
-Write-Host "  $uiImage"
+Write-Host "  $uiImage   (SaaS platform-ui)"
+Write-Host "  $wizardImage   (single-tenant setup)"
+Write-Host "  $adminImage   (single-tenant admin)"
 Write-Host ""
 Write-Host "Deploy on any server:"
 Write-Host "  1. Copy deploy/saas/ to the server"

@@ -1,0 +1,160 @@
+# RAG4All SaaS — Render Blueprint
+#
+# Deploy:
+#   1. Push this repo to GitHub
+#   2. Render Dashboard → New → Blueprint
+#   3. Connect repo, set Blueprint path: deploy/saas/render.yaml
+#   4. When prompted, set PLATFORM_URL, API_PUBLIC_URL, SITE_URL
+#   5. After deploy, run deploy/saas/render-init-db.sql in Postgres shell
+#   6. Add custom domains: app.* → platform-ui, api.* → api
+#
+# Docs: deploy/saas/RENDER.md
+
+databases:
+  - name: rag4all-db
+    databaseName: rag4all
+    user: rag4all
+    plan: basic-256mb
+    postgresMajorVersion: "16"
+    ipAllowList: []
+
+services:
+  - type: keyvalue
+    name: rag4all-redis
+    plan: starter
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+  - type: pserv
+    name: rag4all-minio
+    runtime: image
+    plan: starter
+    image:
+      url: docker.io/minio/minio:latest
+    dockerCommand: server /data --address :10000 --console-address :10001
+    envVars:
+      - key: MINIO_ROOT_USER
+        generateValue: true
+      - key: MINIO_ROOT_PASSWORD
+        generateValue: true
+    disk:
+      name: minio-data
+      mountPath: /data
+      sizeGB: 10
+
+  - type: web
+    name: rag4all-api
+    runtime: image
+    plan: starter
+    image:
+      url: docker.io/mohds5252/rag4all-api:latest
+    healthCheckPath: /v1/health
+    dockerCommand: >-
+      sh -c 'export DATABASE_URL="$$(echo "$$DATABASE_URL" | sed "s|^postgresql://|postgresql+asyncpg://|")";
+      alembic upgrade head &&
+      python -m app.scripts.seed &&
+      uvicorn app.main:app --host 0.0.0.0 --port $${PORT:-8000}'
+    envVars:
+      - fromGroup: rag4all-backend
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rag4all-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: rag4all-redis
+          type: keyvalue
+          property: connectionString
+      - key: MINIO_ENDPOINT
+        fromService:
+          name: rag4all-minio
+          type: pserv
+          property: hostport
+      - key: MINIO_ACCESS_KEY
+        fromService:
+          name: rag4all-minio
+          type: pserv
+          envVarKey: MINIO_ROOT_USER
+      - key: MINIO_SECRET_KEY
+        fromService:
+          name: rag4all-minio
+          type: pserv
+          envVarKey: MINIO_ROOT_PASSWORD
+
+  - type: worker
+    name: rag4all-worker
+    runtime: image
+    plan: starter
+    image:
+      url: docker.io/mohds5252/rag4all-api:latest
+    dockerCommand: >-
+      sh -c 'export DATABASE_URL="$$(echo "$$DATABASE_URL" | sed "s|^postgresql://|postgresql+asyncpg://|")";
+      arq app.workers.WorkerSettings'
+    envVars:
+      - fromGroup: rag4all-backend
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rag4all-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: rag4all-redis
+          type: keyvalue
+          property: connectionString
+      - key: MINIO_ENDPOINT
+        fromService:
+          name: rag4all-minio
+          type: pserv
+          property: hostport
+      - key: MINIO_ACCESS_KEY
+        fromService:
+          name: rag4all-minio
+          type: pserv
+          envVarKey: MINIO_ROOT_USER
+      - key: MINIO_SECRET_KEY
+        fromService:
+          name: rag4all-minio
+          type: pserv
+          envVarKey: MINIO_ROOT_PASSWORD
+
+  - type: web
+    name: rag4all-platform-ui
+    runtime: image
+    plan: starter
+    image:
+      url: docker.io/mohds5252/rag4all-platform-ui:latest
+    healthCheckPath: /
+    dockerCommand: >-
+      sh -c 'sed -i "s/listen 80/listen $$PORT/" /etc/nginx/conf.d/default.conf &&
+      /docker-entrypoint.sh'
+    envVars:
+      - key: API_PUBLIC_URL
+        sync: false
+
+envVarGroups:
+  - name: rag4all-backend
+    envVars:
+      - key: DEPLOYMENT_MODE
+        value: multi_tenant
+      - key: SITE_URL_ALLOW_LOCALHOST
+        value: "false"
+      - key: MINIO_BUCKET
+        value: documents
+      - key: MINIO_SECURE
+        value: "false"
+      - key: LLM_PROVIDER
+        value: openai
+      - key: EMBEDDING_PROVIDER
+        value: openai
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: SUPER_ADMIN_API_KEY
+        generateValue: true
+      - key: PLATFORM_URL
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: SITE_URL
+        sync: false
