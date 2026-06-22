@@ -142,13 +142,16 @@ Normal customers use `/v1/auth/signup` instead.
 
 ## Deploy on Render
 
-One-click SaaS on [Render](https://render.com) using **`deploy/saas/render.yaml`**.
+| Mode | Blueprint | Cost |
+| ---- | --------- | ---- |
+| **Production** | `deploy/saas/render.yaml` | ~$35–50+/mo (Render asks for card) |
+| **Free demo** | `deploy/saas/render-free.yaml` | $0 (30-day DB, apps sleep, needs Upstash + R2) |
+| **Free production** | `deploy/saas/docker-compose.hub.yml` on Oracle Cloud free VM | $0 |
+
+**Full free guide:** [deploy/saas/FREE-DEPLOY.md](./FREE-DEPLOY.md)
 
 ```text
-Blueprint path: deploy/saas/render.yaml
-Env reference:  deploy/saas/.env.render.example
-Postgres init:  deploy/saas/render-init-db.sql
-Full guide:     deploy/saas/RENDER.md
+Paid:   Blueprint path → deploy/saas/render.yaml
+Free:   Blueprint path → deploy/saas/render-free.yaml  (+ Upstash Redis + Cloudflare R2)
+VM:     deploy/saas/docker-compose.hub.yml
 ```
-
-Do **not** use `rag4all-deploy/` (single-tenant) for Render SaaS.

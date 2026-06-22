@@ -1,4 +1,7 @@
-# RAG4All SaaS — Render Blueprint
+# RAG4All SaaS — Render Blueprint (paid production)
+#
+# ⚠️  Requires payment (~$35–50+/mo). For FREE options see FREE-DEPLOY.md
+#     and use render-free.yaml or a free VM + docker-compose.hub.yml
 #
 # Deploy:
 #   1. Push this repo to GitHub

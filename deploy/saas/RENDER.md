@@ -2,6 +2,8 @@
 
 Run the **multi-tenant** platform on Render — customers sign up at `app.yourdomain.com`, bring their own LLM keys, upload docs, and embed the widget.
 
+> **Want free?** Render will ask for payment with `render.yaml` (paid plans). See **[FREE-DEPLOY.md](./FREE-DEPLOY.md)** for free options: `render-free.yaml` (demo) or a free VM + Docker Compose (recommended).
+
 > **Not for single-tenant.** Use [rag4all-deploy](https://github.com/mdvohra/RAG4All) (Docker Compose) for local / single-site deploy.
 
 ## What gets created
