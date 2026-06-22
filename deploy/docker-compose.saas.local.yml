@@ -1,0 +1,20 @@
+# Local SaaS overrides — use with:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.saas.yml -f deploy/docker-compose.saas.local.yml up -d --build
+
+services:
+  api:
+    ports:
+      - "8000:8000"
+    environment:
+      SITE_URL_ALLOW_LOCALHOST: "true"
+
+  platform-ui:
+    ports:
+      - "3001:80"
+    environment:
+      API_PUBLIC_URL: http://localhost:8000
+
+  caddy:
+    ports:
+      - "80:80"
+      - "443:443"

@@ -24,7 +24,13 @@ function init() {
 
   const brandPanel = el("div", "brand-panel");
   const brandContent = el("div", "brand-content");
-  brandContent.appendChild(el("div", "brand-logo", "RAG Embed"));
+  const brandLogo = el("div", "brand-logo");
+  const logoImg = document.createElement("img");
+  logoImg.src = "/assets/logo-rag4all.svg";
+  logoImg.alt = "RAG4All";
+  logoImg.style.height = "32px";
+  brandLogo.appendChild(logoImg);
+  brandContent.appendChild(brandLogo);
   const brandIllustration = el("div", "brand-illustration");
   const brandTitle = el("h2", "brand-step-title");
   const brandDesc = el("p", "brand-step-desc");

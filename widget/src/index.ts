@@ -64,7 +64,7 @@ class RagEmbedWidget {
 
   async init() {
     if (this.opts.siteUrl && !validateOrigin(this.opts.siteUrl)) {
-      console.error("RAG Embed: origin does not match data-site-url");
+      console.error("RAG4All: origin does not match data-site-url");
       return;
     }
     try {
@@ -77,7 +77,11 @@ class RagEmbedWidget {
         starterQuestions: [],
         welcomeMessage: "Hi! How can I help?",
         siteUrl: this.opts.siteUrl,
+        poweredBy: "RAG4All",
+        showPoweredBy: true,
       };
+      this.render(true);
+      return;
     }
     this.render();
     window.addEventListener("message", (e) => {
@@ -96,7 +100,7 @@ class RagEmbedWidget {
     this.bubble.classList.add("pulse");
   }
 
-  private render() {
+  private render(apiDown = false) {
     const c = this.config!;
     const color = c.primaryColor || this.opts.primaryColor;
     const pos = c.position || this.opts.position;
@@ -127,7 +131,7 @@ class RagEmbedWidget {
     title.textContent = c.title || this.opts.title;
     const sub = document.createElement("div");
     sub.className = "header-sub";
-    sub.textContent = "Powered by your documents";
+    sub.textContent = "Answers from your documents";
     headerText.append(title, sub);
     const closeBtn = document.createElement("button");
     closeBtn.className = "close-btn";
@@ -165,8 +169,23 @@ class RagEmbedWidget {
     this.sendBtn.onclick = () => this.send(this.input.value);
     inputRow.append(this.input, this.sendBtn);
 
-    this.panel.append(header, this.messagesEl, this.startersEl, inputRow);
+    const showPowered = c.showPoweredBy !== false && c.poweredBy;
+    let footer: HTMLElement | null = null;
+    if (showPowered) {
+      footer = document.createElement("div");
+      footer.className = "powered-footer";
+      footer.innerHTML = `Powered by <strong>${c.poweredBy || "RAG4All"}</strong>`;
+    }
+
+    if (footer) this.panel.append(header, this.messagesEl, this.startersEl, inputRow, footer);
+    else this.panel.append(header, this.messagesEl, this.startersEl, inputRow);
     this.shadow.append(this.bubble, this.panel);
+
+    if (apiDown) {
+      this.addBotMessage("Chat is temporarily unavailable. Please try again in a moment.");
+      this.input.disabled = true;
+      this.sendBtn.disabled = true;
+    }
   }
 
   private hideStarters() {
@@ -298,8 +317,8 @@ class RagEmbedWidget {
       }
     } catch (err) {
       this.hideTyping();
-      this.addBotMessage("Sorry, something went wrong. Please try again.");
-      console.error(err);
+      this.addBotMessage("Chat is temporarily unavailable. Please try again in a moment.");
+      console.error("RAG4All widget:", err);
     }
     this.sendBtn.disabled = false;
   }

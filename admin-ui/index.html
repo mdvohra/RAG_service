@@ -3,28 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RAG Embed — Document Manager</title>
+  <title>RAG4All — Document Manager</title>
+  <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; }
     body {
-      font-family: system-ui, sans-serif;
+      font-family: Inter, system-ui, sans-serif;
       margin: 0;
-      background: #f1f5f9;
+      background: #f8fafc;
       color: #0f172a;
       min-height: 100vh;
     }
     header {
-      background: #4f46e5;
-      color: #fff;
+      background: #fff;
+      color: #0f172a;
       padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
+      border-bottom: 1px solid #e2e8f0;
     }
-    header h1 { margin: 0; font-size: 1.2rem; }
-    header nav a { color: #e0e7ff; font-size: 14px; margin-left: 16px; }
+    header .brand { display: flex; align-items: center; gap: 12px; }
+    header .brand img { height: 28px; }
+    header h1 { margin: 0; font-size: 1rem; font-weight: 600; }
+    header nav a { color: #5b4fe8; font-size: 14px; margin-left: 16px; text-decoration: none; }
+    header nav a:hover { text-decoration: underline; }
     main { max-width: 1100px; margin: 0 auto; padding: 24px; }
     .card {
       background: #fff;
@@ -45,7 +51,7 @@
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
     button {
-      background: #4f46e5;
+      background: #5b4fe8;
       color: #fff;
       border: none;
       padding: 10px 16px;
@@ -106,14 +112,17 @@
       margin-top: 12px;
       background: #f8fafc;
     }
-    .upload-zone.drag { border-color: #4f46e5; background: #eef2ff; }
+    .upload-zone.drag { border-color: #5b4fe8; background: #ede9fe; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Document Manager</h1>
+    <div class="brand">
+      <img src="assets/logo-rag4all.svg" alt="RAG4All" />
+      <h1>Document Manager</h1>
+    </div>
     <nav>
-      <a href="http://localhost:8080" target="_blank">Setup Wizard</a>
+      <a href="http://localhost:8080" target="_blank">Setup Wizard (first-time setup)</a>
       <a href="http://localhost:3000" target="_blank">Sample Site</a>
     </nav>
   </header>

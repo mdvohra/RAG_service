@@ -10,6 +10,10 @@ from app.models import Collection, Tenant
 
 
 async def seed() -> None:
+    if settings.deployment_mode == "multi_tenant":
+        print("Seed: skipped (multi_tenant — tenants created via signup)")
+        return
+
     async with async_session() as db:
         result = await db.execute(select(Tenant).limit(1))
         if result.scalar_one_or_none():

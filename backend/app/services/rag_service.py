@@ -7,8 +7,9 @@ from app.config import settings
 from app.core.conversation import load_history, maybe_summarize, save_message
 from app.core.embeddings.factory import get_embedding_provider
 from app.core.llm.base import LLMMessage
-from app.core.llm.factory import get_llm_provider
 from app.core.persona import build_general_system_prompt, build_system_prompt
+from app.core.tenant_config import tenant_company_context, tenant_general_chat_enabled, tenant_site_url
+from app.core.tenant_llm import get_llm_for_tenant
 from app.core.rag.hybrid import hybrid_search
 from app.core.rag.intent import (
     is_document_overview_question,
@@ -23,12 +24,13 @@ from app.core.rag.query_rewrite import (
     should_strict_rag,
 )
 from app.core.rag.reranker import rerank_chunks
-from app.models import Conversation
+from app.models import Conversation, Tenant
 
 
 class RAGService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, tenant: Tenant | None = None):
         self.db = db
+        self.tenant = tenant
         self.embedder = get_embedding_provider()
 
     async def retrieve(
@@ -93,7 +95,7 @@ class RAGService:
             confidence_score=confidence,
             retrieval_metadata=retrieval_meta,
         )
-        yield {"type": "done", "sources": sources, "site_url": settings.site_url}
+        yield {"type": "done", "sources": sources, "site_url": tenant_site_url(self.tenant)}
 
     async def _stream_llm_answer(
         self,
@@ -105,7 +107,7 @@ class RAGService:
         retrieval_meta: dict,
         collection_slug: str | None = None,
     ) -> AsyncIterator[dict]:
-        llm = get_llm_provider(collection_slug)
+        llm = get_llm_for_tenant(self.tenant, collection_slug)
 
         async def complete_fn(sys_prompt: str, text: str) -> str:
             return await llm.complete(sys_prompt, [LLMMessage(role="user", content=text)])
@@ -133,7 +135,7 @@ class RAGService:
             confidence_score=confidence,
             retrieval_metadata=retrieval_meta,
         )
-        yield {"type": "done", "sources": sources, "site_url": settings.site_url}
+        yield {"type": "done", "sources": sources, "site_url": tenant_site_url(self.tenant)}
 
     async def chat_stream(
         self,
@@ -150,7 +152,7 @@ class RAGService:
 
         await save_message(self.db, conversation.id, "user", message)
 
-        if is_greeting(message) and settings.general_chat_enabled:
+        if is_greeting(message) and tenant_general_chat_enabled(self.tenant):
             system = build_general_system_prompt(document_names)
             async for event in self._stream_llm_answer(
                 conversation,
@@ -177,7 +179,7 @@ class RAGService:
                 yield event
             return
 
-        if is_support_question(message) and settings.general_chat_enabled:
+        if is_support_question(message) and tenant_general_chat_enabled(self.tenant):
             system = build_general_system_prompt(document_names)
             async for event in self._stream_llm_answer(
                 conversation,
@@ -221,7 +223,7 @@ class RAGService:
                 yield event
             return
 
-        if settings.general_chat_enabled:
+        if settings.general_chat_enabled and tenant_general_chat_enabled(self.tenant):
             system = build_general_system_prompt(document_names)
             if sources:
                 system += (

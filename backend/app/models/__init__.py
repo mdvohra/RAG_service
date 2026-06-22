@@ -32,6 +32,19 @@ class Tenant(Base):
 
     collections: Mapped[list["Collection"]] = relationship(back_populates="tenant")
     conversations: Mapped[list["Conversation"]] = relationship(back_populates="tenant")
+    users: Mapped[list["User"]] = relationship(back_populates="tenant")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="users")
 
 
 class Collection(Base):

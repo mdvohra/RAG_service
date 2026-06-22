@@ -6,6 +6,8 @@ export interface WidgetConfig {
   welcomeMessage: string;
   siteUrl: string;
   widgetKey?: string;
+  poweredBy?: string;
+  showPoweredBy?: boolean;
 }
 
 export class ApiClient {

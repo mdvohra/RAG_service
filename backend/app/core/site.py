@@ -3,6 +3,8 @@ from urllib.parse import urlparse
 from fastapi import HTTPException, Request
 
 from app.config import settings
+from app.core.tenant_config import tenant_site_url
+from app.models import Tenant
 
 
 def _normalize_origin(url: str) -> str:
@@ -16,7 +18,7 @@ def _is_localhost(origin: str) -> bool:
     return parsed.hostname in ("localhost", "127.0.0.1")
 
 
-def is_origin_allowed(origin: str | None, referer: str | None = None) -> bool:
+def is_origin_allowed(origin: str | None, referer: str | None = None, tenant: Tenant | None = None) -> bool:
     candidate = origin or referer
     if not candidate:
         return settings.site_url_allow_localhost
@@ -26,7 +28,7 @@ def is_origin_allowed(origin: str | None, referer: str | None = None) -> bool:
     if settings.site_url_allow_localhost and _is_localhost(normalized):
         return True
 
-    site = _normalize_origin(settings.site_url)
+    site = _normalize_origin(tenant_site_url(tenant))
     if normalized == site:
         return True
 
@@ -44,11 +46,12 @@ def is_origin_allowed(origin: str | None, referer: str | None = None) -> bool:
     return False
 
 
-def validate_widget_origin(request: Request) -> None:
+def validate_widget_origin(request: Request, tenant: Tenant | None = None) -> None:
     origin = request.headers.get("origin")
     referer = request.headers.get("referer")
-    if not is_origin_allowed(origin, referer):
+    if not is_origin_allowed(origin, referer, tenant):
+        site = tenant_site_url(tenant)
         raise HTTPException(
             status_code=403,
-            detail=f"Origin not allowed. Requests must come from {settings.site_url}",
+            detail=f"Origin not allowed. Requests must come from {site}",
         )

@@ -1,0 +1,80 @@
+# SaaS hosted deployment overlay
+# docker compose -f docker-compose.yml -f deploy/docker-compose.saas.yml up -d --build
+
+services:
+  postgres:
+    ports: []
+
+  redis:
+    ports: []
+
+  minio:
+    ports: []
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    volumes: []
+    restart: unless-stopped
+    environment:
+      DEPLOYMENT_MODE: multi_tenant
+      SITE_URL_ALLOW_LOCALHOST: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DEPLOYMENT_MODE: multi_tenant
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  platform-ui:
+    build:
+      context: ./platform-ui
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-https://api.${DOMAIN}}
+    ports: []
+
+  setup-wizard:
+    profiles: ["onprem-only"]
+
+  admin-ui:
+    profiles: ["onprem-only"]
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile.saas:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      platform-ui:
+        condition: service_started
+
+volumes:
+  caddy_data:
+  caddy_config:

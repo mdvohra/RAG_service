@@ -1,7 +1,7 @@
 export const TOKENS_CSS = `
 :root {
-  --rag-primary: #4f46e5;
-  --rag-primary-hover: #4338ca;
+  --rag-primary: #5b4fe8;
+  --rag-primary-hover: #4a3ed6;
   --rag-bg: #f8fafc;
   --rag-surface: #ffffff;
   --rag-text: #0f172a;
@@ -155,6 +155,13 @@ export const MESSAGES_CSS = `
 .send-btn svg { width: 20px; height: 20px; }
 .send-btn:hover { background: var(--rag-primary-hover); }
 .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.powered-footer {
+  text-align: center; font-size: 11px; color: var(--rag-text-muted);
+  padding: 6px 12px 8px; background: var(--rag-surface);
+  border-top: 1px solid var(--rag-border);
+}
+.powered-footer a { color: var(--rag-text-muted); text-decoration: none; }
+.powered-footer a:hover { color: var(--rag-primary); }
 `;
 
 export function buildStyles(primaryColor: string, position: string): string {

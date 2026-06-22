@@ -17,7 +17,7 @@ from app.core.conversation import (
     get_or_create_conversation,
     load_history,
 )
-from app.core.persona import get_widget_config
+from app.core.tenant_config import get_widget_config_for_tenant
 from app.core.site import validate_widget_origin
 from app.database import get_db
 from app.models import Collection, Conversation, Message, Tenant
@@ -93,7 +93,7 @@ async def _chat_handler(body: ChatRequest, tenant: Tenant, db: AsyncSession):
         db, tenant.id, session_id, body.user_id, body.user_email, body.page_url
     )
     col = await _resolve_collection(db, tenant.id, body.collection_id, body.collection_slug)
-    rag = RAGService(db)
+    rag = RAGService(db, tenant)
 
     async def event_generator():
         async for event in rag.chat_stream(
@@ -118,7 +118,7 @@ async def chat(body: ChatRequest, tenant: Tenant = TenantDep, db: AsyncSession =
         db, tenant.id, session_id, body.user_id, body.user_email, body.page_url
     )
     col = await _resolve_collection(db, tenant.id, body.collection_id, body.collection_slug)
-    rag = RAGService(db)
+    rag = RAGService(db, tenant)
     content = ""
     confidence = 0.0
     sources = []
@@ -159,10 +159,8 @@ async def widget_chat(
 
 @router.get("/widget/config")
 async def widget_config(request: Request, tenant: Tenant = WidgetTenantDep):
-    validate_widget_origin(request)
-    config = get_widget_config()
-    config["widgetKey"] = tenant.widget_key
-    return config
+    validate_widget_origin(request, tenant)
+    return get_widget_config_for_tenant(tenant)
 
 
 @router.get("/conversations")

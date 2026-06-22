@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import chat, collections, documents, health, tenants
+from app.api import auth, chat, collections, dashboard, documents, health, tenants
 from app.config import settings
 from app.services.storage import ensure_bucket
 
@@ -30,6 +30,8 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/v1")
+app.include_router(auth.router, prefix="/v1")
+app.include_router(dashboard.router, prefix="/v1")
 app.include_router(chat.router, prefix="/v1")
 app.include_router(collections.router, prefix="/v1")
 app.include_router(documents.router, prefix="/v1")

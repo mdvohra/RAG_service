@@ -1,0 +1,78 @@
+# Production on-prem overlay — use with:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.onprem.yml up -d --build
+
+services:
+  postgres:
+    ports: []
+
+  redis:
+    ports: []
+
+  minio:
+    ports: []
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    volumes: []
+    restart: unless-stopped
+    environment:
+      SITE_URL_ALLOW_LOCALHOST: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  setup-wizard:
+    restart: unless-stopped
+    environment:
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-https://${DOMAIN}}
+      WIDGET_KEY: ${WIDGET_KEY}
+      API_KEY: ${API_KEY}
+      ADMIN_PUBLIC_URL: ${ADMIN_PUBLIC_URL:-https://admin.${DOMAIN}}
+      SAMPLE_SITE_URL: ${SAMPLE_SITE_URL:-${SITE_URL}}
+    ports: []
+
+  admin-ui:
+    restart: unless-stopped
+    ports: []
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile.onprem:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      setup-wizard:
+        condition: service_started
+      admin-ui:
+        condition: service_started
+
+volumes:
+  caddy_data:
+  caddy_config:

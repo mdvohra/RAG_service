@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Core
     deployment_mode: str = "single_tenant"
     secret_key: str = "change-me"
+    encryption_key: str = ""
+    platform_url: str = ""
+    super_admin_api_key: str = ""
     api_key: str = "rag_dev_api_key_change_me"
     widget_key: str = "wk_dev_widget_key_change_me"
     site_url: str = "http://localhost:3000"
@@ -116,15 +119,19 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         origins = [self.site_url.rstrip("/")]
+        if self.platform_url:
+            origins.append(self.platform_url.rstrip("/"))
         if self.site_url_allow_localhost:
             origins.extend(
                 [
                     "http://localhost",
                     "http://localhost:3000",
+                    "http://localhost:3001",
                     "http://localhost:5173",
                     "http://localhost:8080",
                     "http://localhost:8090",
                     "http://127.0.0.1:3000",
+                    "http://127.0.0.1:3001",
                     "http://127.0.0.1:8080",
                     "http://127.0.0.1:8090",
                 ]

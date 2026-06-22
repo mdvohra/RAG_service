@@ -1,4 +1,4 @@
-# RAG Embed
+# RAG4All
 
 Embeddable RAG microservice with Docker, PostgreSQL+pgvector, MinIO, pluggable LLMs, and a drop-in chat widget.
 
@@ -67,9 +67,20 @@ curl -X POST http://localhost:8000/v1/chat \
 cd widget && npm install && npm run build
 ```
 
-## Multi-tenant mode
+## Production deployment
 
-Set `DEPLOYMENT_MODE=multi_tenant` and use `POST /v1/admin/tenants` to create tenants.
+| Mode | Guide | Compose |
+|------|-------|---------|
+| **On-prem** (self-hosted, single tenant) | [deploy/on-prem/README.md](deploy/on-prem/README.md) | `docker compose -f docker-compose.yml -f deploy/docker-compose.onprem.yml up -d --build` |
+| **SaaS** (hosted multi-tenant on your domain) | [deploy/saas/README.md](deploy/saas/README.md) | `docker compose -f docker-compose.yml -f deploy/docker-compose.saas.yml up -d --build` |
+
+Widget `embed.js` is built inside the API Docker image — no manual `npm run build` required for production deploys.
+
+## Multi-tenant / SaaS mode
+
+Set `DEPLOYMENT_MODE=multi_tenant`. Customers sign up via `POST /v1/auth/signup` or the **platform-ui** at `app.yourdomain.com`. Each tenant brings their own LLM API keys (BYOK).
+
+Operator provisioning (optional): `POST /v1/admin/tenants` with `SUPER_ADMIN_API_KEY`.
 
 ## Architecture
 

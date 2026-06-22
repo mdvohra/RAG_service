@@ -1,0 +1,20 @@
+# Pre-built image tags for Docker Hub publish / pull.
+# Set in .env: DOCKERHUB_USER=yourusername  RAG4ALL_VERSION=latest
+#
+# Build and push (from repo root):
+#   deploy/saas/push-images.ps1
+#   deploy/saas/push-images.sh
+#
+# Remote server (with full repo):
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.saas.yml \
+#     -f deploy/docker-compose.saas.images.yml pull
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.saas.yml \
+#     -f deploy/docker-compose.saas.images.yml up -d
+
+services:
+  api:
+    image: ${DOCKERHUB_USER}/rag4all-api:${RAG4ALL_VERSION:-latest}
+  worker:
+    image: ${DOCKERHUB_USER}/rag4all-api:${RAG4ALL_VERSION:-latest}
+  platform-ui:
+    image: ${DOCKERHUB_USER}/rag4all-platform-ui:${RAG4ALL_VERSION:-latest}

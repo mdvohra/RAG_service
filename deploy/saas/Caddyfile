@@ -1,0 +1,7 @@
+app.{$DOMAIN:localhost} {
+    reverse_proxy platform-ui:80
+}
+
+api.{$DOMAIN:localhost} {
+    reverse_proxy api:8000
+}
